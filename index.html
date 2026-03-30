@@ -310,7 +310,7 @@ body {
   <div class="header">
     <div class="header-badge"><div class="pulse"></div> REAL-TIME MONITOR</div>
     <h1>คุณภาพอากาศ PM 2.5</h1>
-    <div class="header-sub">Air Quality Index — ภายในอาคาร & ภายนอกอาคาร</div>
+    <div class="header-sub">Air Quality Index — ภายใน & ภายนอก อาคารสำนักหอสมุด</div>
   </div>
 
   <div class="info-bar">
@@ -376,7 +376,7 @@ body {
   </div>
 
   <div class="edit-section">
-    <button class="btn-edit" onclick="openPin()">✏️ แก้ไขข้อมูล</button>
+    <button class="btn-edit" onclick="openPin()">✏️ อัปเดตข้อมูล</button>
   </div>
   <div class="footer">PM 2.5 Air Quality Monitor — ข้อมูลเก็บบน <a href="#">Google Sheets</a></div>
 </div>
@@ -584,7 +584,7 @@ function updatePreview(type) {
 // ══════════════════════════════════════
 async function loadFromSheets() {
   if (APPS_SCRIPT_URL.includes("ใส่_URL")) {
-    state = { indoor:{aqi:25,ugm3:8.5,note:"เปิดเครื่องฟอกอากาศ"}, outdoor:{aqi:142,ugm3:53.4,note:"มีหมอกควันเล็กน้อย"}, timestamp:new Date().toISOString(), updater:"ตัวอย่าง (Demo)" };
+    state = { indoor:{aqi:25,ugm3:8.5,note:"เปิดเครื่องฟอกอากาศ"}, outdoor:{aqi:142,ugm3:53.4,note:"มีหมอกควันเล็กน้อย"}, timestamp:new Date().toISOString(), updater:"Team สื่อสารองค์กร" };
     return;
   }
   try {
