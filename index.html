@@ -653,7 +653,7 @@ function openPin() {
 function closePin() { document.getElementById("pinOverlay").classList.remove("show"); }
 
 document.getElementById("pinInput").addEventListener("input", function() {
-  if (this.value.length === 4) {
+  if (this.value.length === 5) {
     if (this.value === EDIT_PIN) { closePin(); openEdit(); }
     else {
       this.classList.add("shake");
