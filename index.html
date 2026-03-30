@@ -32,8 +32,8 @@ body {
 .cosmos .nebula:nth-child(2) { width: 500px; height: 500px; bottom: -150px; right: -100px; background: #7C3AED; animation-delay: -7s; }
 .cosmos .nebula:nth-child(3) { width: 300px; height: 300px; top: 30%; left: 55%; background: #3b82f6; animation-delay: -12s; }
 @keyframes drift {
-  0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-  100% { transform: translate(30px, -20px) scale(1.1) rotate(5deg); }
+  0% { transform: translate(0,0) scale(1) rotate(0deg); }
+  100% { transform: translate(30px,-20px) scale(1.1) rotate(5deg); }
 }
 .stars {
   position: fixed; inset: 0; z-index: 0;
@@ -130,14 +130,12 @@ body {
 }
 .aqi-label-sm { font-size: 11px; color: #64748b; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
 
-/* Status pill */
 .status-pill {
   display: inline-block; padding: 5px 18px; border-radius: 99px;
   font-size: 14px; font-weight: 800; font-family: 'Kanit', sans-serif;
   letter-spacing: 0.5px; transition: all 0.5s; margin-bottom: 14px;
 }
 
-/* µg/m³ */
 .ugm3-box {
   display: inline-flex; align-items: baseline; gap: 4px;
   padding: 8px 22px; border-radius: 14px;
@@ -145,7 +143,6 @@ body {
 }
 .ugm3-number { font-family: 'Kanit', sans-serif; font-weight: 800; font-size: 26px; transition: color 0.5s; }
 .ugm3-unit { font-size: 13px; color: #64748b; font-weight: 600; }
-
 .card-note { margin-top: 12px; font-size: 12.5px; color: #64748b; font-weight: 500; font-style: italic; min-height: 18px; }
 
 /* ===== LEVEL STYLES ===== */
@@ -310,7 +307,7 @@ body {
   <div class="header">
     <div class="header-badge"><div class="pulse"></div> REAL-TIME MONITOR</div>
     <h1>คุณภาพอากาศ PM 2.5</h1>
-    <div class="header-sub">Air Quality Index — ภายใน & ภายนอก อาคารสำนักหอสมุด</div>
+    <div class="header-sub">Air Quality Index — ภายในอาคาร & ภายนอกอาคาร</div>
   </div>
 
   <div class="info-bar">
@@ -320,9 +317,8 @@ body {
   </div>
 
   <div class="aqi-grid">
-    <!-- Indoor -->
     <div class="aqi-card" id="cardIndoor">
-      <div class="card-tag"><span style="font-size:15px">🏢</span> INDOOR THE lIBRARY — ภายในอาคารสำนักหอสมุด</div>
+      <div class="card-tag"><span style="font-size:15px">🏢</span> INDOOR — ภายในอาคาร</div>
       <div class="aqi-ring-wrap">
         <svg class="aqi-ring-svg" viewBox="0 0 200 200">
           <circle class="ring-bg" cx="100" cy="100" r="88"/>
@@ -342,9 +338,8 @@ body {
       <div class="card-note" id="indoorNote"></div>
     </div>
 
-    <!-- Outdoor -->
     <div class="aqi-card" id="cardOutdoor">
-      <div class="card-tag"><span style="font-size:15px">🌳</span> OUTDOOR THE lIBRARY — ภายนอกอาคารสำนักหอสมุด</div>
+      <div class="card-tag"><span style="font-size:15px">🌳</span> OUTDOOR — ภายนอกอาคาร</div>
       <div class="aqi-ring-wrap">
         <svg class="aqi-ring-svg" viewBox="0 0 200 200">
           <circle class="ring-bg" cx="100" cy="100" r="88"/>
@@ -376,7 +371,7 @@ body {
   </div>
 
   <div class="edit-section">
-    <button class="btn-edit" onclick="openPin()">✏️ อัปเดตข้อมูล</button>
+    <button class="btn-edit" onclick="openPin()">✏️ แก้ไขข้อมูล</button>
   </div>
   <div class="footer">PM 2.5 Air Quality Monitor — ข้อมูลเก็บบน <a href="#">Google Sheets</a></div>
 </div>
@@ -461,7 +456,7 @@ const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwz38bzPOzEM_IV
 const EDIT_PIN = "4567";
 
 // ══════════════════════════════════════════
-//  PM2.5 AQI ↔ µg/m³ CONVERSION (US EPA)
+//  PM2.5 AQI ↔ µg/m³ (US EPA Breakpoints)
 // ══════════════════════════════════════════
 const BP = [
   { aqiLo:0,   aqiHi:50,  cLo:0.0,   cHi:12.0   },
@@ -474,9 +469,10 @@ const BP = [
 ];
 
 function aqiToUgm3(aqi) {
-  const v = Number(aqi);
+  var v = Number(aqi);
   if (isNaN(v) || v < 0) return 0;
-  for (const b of BP) {
+  for (var i = 0; i < BP.length; i++) {
+    var b = BP[i];
     if (v >= b.aqiLo && v <= b.aqiHi) {
       return Math.round(((v - b.aqiLo) / (b.aqiHi - b.aqiLo) * (b.cHi - b.cLo) + b.cLo) * 10) / 10;
     }
@@ -485,9 +481,10 @@ function aqiToUgm3(aqi) {
 }
 
 function ugm3ToAqi(conc) {
-  const v = Number(conc);
+  var v = Number(conc);
   if (isNaN(v) || v < 0) return 0;
-  for (const b of BP) {
+  for (var i = 0; i < BP.length; i++) {
+    var b = BP[i];
     if (v >= b.cLo && v <= b.cHi) {
       return Math.round((b.aqiHi - b.aqiLo) / (b.cHi - b.cLo) * (v - b.cLo) + b.aqiLo);
     }
@@ -495,17 +492,17 @@ function ugm3ToAqi(conc) {
   return Math.min(Math.round(v), 500);
 }
 
-let editLock = false;
+var editLock = false;
 function onAqiInput(type) {
   if (editLock) return; editLock = true;
-  const v = document.getElementById(`edit${cap(type)}Aqi`).value;
-  if (v !== '') document.getElementById(`edit${cap(type)}Ugm3`).value = aqiToUgm3(v);
+  var v = document.getElementById("edit" + cap(type) + "Aqi").value;
+  if (v !== "") document.getElementById("edit" + cap(type) + "Ugm3").value = aqiToUgm3(v);
   updatePreview(type); editLock = false;
 }
 function onUgm3Input(type) {
   if (editLock) return; editLock = true;
-  const v = document.getElementById(`edit${cap(type)}Ugm3`).value;
-  if (v !== '') document.getElementById(`edit${cap(type)}Aqi`).value = ugm3ToAqi(v);
+  var v = document.getElementById("edit" + cap(type) + "Ugm3").value;
+  if (v !== "") document.getElementById("edit" + cap(type) + "Aqi").value = ugm3ToAqi(v);
   updatePreview(type); editLock = false;
 }
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -513,29 +510,28 @@ function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 // ══════════════════════════════════════
 //  AQI LEVELS
 // ══════════════════════════════════════
-const LEVELS = [
-  { min:0,   max:50,  label:"คุณภาพดี",           cls:"lv-good"      },
-  { min:51,  max:100, label:"ปานกลาง",            cls:"lv-moderate"  },
-  { min:101, max:150, label:"ไม่ดีต่อกลุ่มเสี่ยง", cls:"lv-usg"       },
-  { min:151, max:200, label:"ไม่ดีต่อสุขภาพ",      cls:"lv-unhealthy" },
-  { min:201, max:300, label:"อันตราย",             cls:"lv-very"      },
-  { min:301, max:999, label:"อันตรายมาก",          cls:"lv-hazardous" },
+var LEVELS = [
+  { min:0,   max:50,  label:"คุณภาพดี",           cls:"lv-good",      color:"#00E400" },
+  { min:51,  max:100, label:"ปานกลาง",            cls:"lv-moderate",  color:"#d4b800" },
+  { min:101, max:150, label:"ไม่ดีต่อกลุ่มเสี่ยง", cls:"lv-usg",       color:"#FF7E00" },
+  { min:151, max:200, label:"ไม่ดีต่อสุขภาพ",      cls:"lv-unhealthy", color:"#FF0000" },
+  { min:201, max:300, label:"อันตราย",             cls:"lv-very",      color:"#8F3F97" },
+  { min:301, max:999, label:"อันตรายมาก",          cls:"lv-hazardous", color:"#7E0023" },
 ];
-const LEVEL_COLORS = ["#00E400","#d4b800","#FF7E00","#FF0000","#8F3F97","#7E0023"];
 
 function getLevel(aqi) {
-  const v = Number(aqi) || 0;
-  for (let i = 0; i < LEVELS.length; i++) {
-    if (v >= LEVELS[i].min && v <= LEVELS[i].max) return { ...LEVELS[i], color: LEVEL_COLORS[i], idx: i };
+  var v = Number(aqi) || 0;
+  for (var i = 0; i < LEVELS.length; i++) {
+    if (v >= LEVELS[i].min && v <= LEVELS[i].max) return LEVELS[i];
   }
-  return { ...LEVELS[5], color: LEVEL_COLORS[5], idx: 5 };
+  return LEVELS[LEVELS.length - 1];
 }
 
 // ══════════════════════════════════════
 //  STATE & RENDER
 // ══════════════════════════════════════
-let state = { indoor:{aqi:0,ugm3:0,note:""}, outdoor:{aqi:0,ugm3:0,note:""}, timestamp:"", updater:"" };
-const CIRC = 2 * Math.PI * 88; // ~553
+var state = { indoor:{aqi:0,ugm3:0,note:""}, outdoor:{aqi:0,ugm3:0,note:""}, timestamp:"", updater:"" };
+var CIRC = 2 * Math.PI * 88;
 
 function render() {
   renderCard("indoor", state.indoor);
@@ -545,64 +541,105 @@ function render() {
 }
 
 function renderCard(type, data) {
-  const lv = getLevel(data.aqi);
-  const card = document.getElementById(type === "indoor" ? "cardIndoor" : "cardOutdoor");
-  LEVELS.forEach(l => card.classList.remove(l.cls));
+  var lv = getLevel(data.aqi);
+  var card = document.getElementById(type === "indoor" ? "cardIndoor" : "cardOutdoor");
+  LEVELS.forEach(function(l) { card.classList.remove(l.cls); });
   card.classList.add(lv.cls);
 
-  const pre = type === "indoor" ? "indoor" : "outdoor";
-  document.getElementById(pre + "Aqi").textContent = data.aqi;
-  document.getElementById(pre + "Ugm3").textContent = data.ugm3;
-  document.getElementById(pre + "Status").textContent = lv.label;
-  document.getElementById(pre + "Note").textContent = data.note || "";
+  document.getElementById(type + "Aqi").textContent = data.aqi;
+  document.getElementById(type + "Ugm3").textContent = data.ugm3;
+  document.getElementById(type + "Status").textContent = lv.label;
+  document.getElementById(type + "Note").textContent = data.note || "";
 
-  // Ring progress (0-500 → 0-100%)
-  const pct = Math.min(Number(data.aqi) / 500, 1);
-  const offset = CIRC * (1 - pct);
+  var pct = Math.min(Number(data.aqi) / 500, 1);
+  var offset = CIRC * (1 - pct);
   document.getElementById("ring" + cap(type)).style.strokeDashoffset = offset;
 }
 
 function formatDate(str) {
   try {
-    const d = new Date(str);
-    return d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'})
-      + " " + d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) + " น.";
-  } catch { return str; }
+    var d = new Date(str);
+    return d.toLocaleDateString("th-TH",{day:"2-digit",month:"short",year:"numeric"})
+      + " " + d.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"}) + " น.";
+  } catch(e) { return str; }
 }
 
 function updatePreview(type) {
-  const aqi = Number(document.getElementById(`edit${cap(type)}Aqi`).value) || 0;
-  const lv = getLevel(aqi);
-  const el = document.getElementById(`preview${cap(type)}`);
-  el.textContent = `AQI ${aqi} → ${lv.label}`;
+  var aqi = Number(document.getElementById("edit" + cap(type) + "Aqi").value) || 0;
+  var lv = getLevel(aqi);
+  var el = document.getElementById("preview" + cap(type));
+  el.textContent = "AQI " + aqi + " → " + lv.label;
   el.style.background = lv.color + "18";
   el.style.color = lv.color;
 }
 
-// ══════════════════════════════════════
-//  GOOGLE SHEETS
-// ══════════════════════════════════════
-async function loadFromSheets() {
-  if (APPS_SCRIPT_URL.includes("ใส่_URL")) {
-    state = { indoor:{aqi:25,ugm3:8.5,note:"เปิดเครื่องฟอกอากาศ"}, outdoor:{aqi:142,ugm3:53.4,note:"มีหมอกควันเล็กน้อย"}, timestamp:new Date().toISOString(), updater:"Team สื่อสารองค์กร" };
-    return;
-  }
-  try {
-    const res = await fetch(APPS_SCRIPT_URL);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    state = { indoor:data.indoor||{aqi:0,ugm3:0,note:""}, outdoor:data.outdoor||{aqi:0,ugm3:0,note:""}, timestamp:data.timestamp||"", updater:data.updater||"" };
-  } catch(e) { console.error(e); toast("⚠️ โหลดข้อมูลไม่ได้","err"); }
+// ══════════════════════════════════════════════════
+//  GOOGLE SHEETS — ใช้ GET ทั้งอ่านและเขียน
+//  (แก้ปัญหา CORS/Redirect ของ POST)
+// ══════════════════════════════════════════════════
+function isUrlSet() {
+  return APPS_SCRIPT_URL.indexOf("ใส่_URL") === -1 && APPS_SCRIPT_URL.length > 20;
 }
 
-async function saveToSheets(p) {
-  if (APPS_SCRIPT_URL.includes("ใส่_URL")) { toast("⚠️ ยังไม่ได้ตั้ง URL","err"); return false; }
+async function loadFromSheets() {
+  if (!isUrlSet()) {
+    state = {
+      indoor: { aqi: 25, ugm3: 8.5, note: "เปิดเครื่องฟอกอากาศ" },
+      outdoor: { aqi: 142, ugm3: 53.4, note: "มีหมอกควันเล็กน้อย" },
+      timestamp: new Date().toISOString(),
+      updater: "ตัวอย่าง (Demo)"
+    };
+    return;
+  }
+
   try {
-    const res = await fetch(APPS_SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(p)});
-    const data = await res.json();
+    var res = await fetch(APPS_SCRIPT_URL + "?action=read&t=" + Date.now());
+    var data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    state = {
+      indoor: data.indoor || { aqi:0, ugm3:0, note:"" },
+      outdoor: data.outdoor || { aqi:0, ugm3:0, note:"" },
+      timestamp: data.timestamp || "",
+      updater: data.updater || ""
+    };
+  } catch(e) {
+    console.error("Load error:", e);
+    toast("⚠️ โหลดข้อมูลไม่ได้: " + e.message, "err");
+  }
+}
+
+async function saveToSheets(payload) {
+  if (!isUrlSet()) {
+    toast("⚠️ ยังไม่ได้ตั้ง URL ของ Google Apps Script", "err");
+    return false;
+  }
+
+  try {
+    // ★ ส่งข้อมูลผ่าน GET parameters (หลีกเลี่ยง CORS redirect ของ POST) ★
+    var params = new URLSearchParams();
+    params.set("action", "save");
+    params.set("indoor_aqi", payload.indoor_aqi);
+    params.set("indoor_ugm3", payload.indoor_ugm3);
+    params.set("indoor_note", encodeURIComponent(payload.indoor_note));
+    params.set("outdoor_aqi", payload.outdoor_aqi);
+    params.set("outdoor_ugm3", payload.outdoor_ugm3);
+    params.set("outdoor_note", encodeURIComponent(payload.outdoor_note));
+    params.set("updater", encodeURIComponent(payload.updater));
+    params.set("t", Date.now());
+
+    var url = APPS_SCRIPT_URL + "?" + params.toString();
+    var res = await fetch(url);
+    var data = await res.json();
+
     if (data.error) throw new Error(data.error);
     return true;
-  } catch(e) { console.error(e); toast("❌ บันทึกไม่สำเร็จ: "+e.message,"err"); return false; }
+
+  } catch(e) {
+    console.error("Save error:", e);
+    toast("❌ บันทึกไม่สำเร็จ: " + e.message, "err");
+    return false;
+  }
 }
 
 // ══════════════════════════════════════
@@ -610,14 +647,19 @@ async function saveToSheets(p) {
 // ══════════════════════════════════════
 function openPin() {
   document.getElementById("pinOverlay").classList.add("show");
-  const inp = document.getElementById("pinInput"); inp.value = "";
-  setTimeout(() => inp.focus(), 200);
+  var inp = document.getElementById("pinInput"); inp.value = "";
+  setTimeout(function() { inp.focus(); }, 200);
 }
 function closePin() { document.getElementById("pinOverlay").classList.remove("show"); }
+
 document.getElementById("pinInput").addEventListener("input", function() {
   if (this.value.length === 4) {
     if (this.value === EDIT_PIN) { closePin(); openEdit(); }
-    else { this.classList.add("shake"); setTimeout(() => { this.classList.remove("shake"); this.value = ""; }, 500); }
+    else {
+      this.classList.add("shake");
+      var self = this;
+      setTimeout(function() { self.classList.remove("shake"); self.value = ""; }, 500);
+    }
   }
 });
 document.getElementById("pinOverlay").addEventListener("click", function(e) { if (e.target === this) closePin(); });
@@ -637,38 +679,59 @@ function closeEdit() { document.getElementById("editOverlay").classList.remove("
 document.getElementById("editOverlay").addEventListener("click", function(e) { if (e.target === this) closeEdit(); });
 
 async function saveData() {
-  const btn = document.getElementById("btnSave");
+  var btn = document.getElementById("btnSave");
   btn.disabled = true; btn.textContent = "⏳ กำลังบันทึก...";
-  const p = {
-    indoor_aqi: Number(document.getElementById("editIndoorAqi").value)||0,
-    indoor_ugm3: Number(document.getElementById("editIndoorUgm3").value)||0,
+
+  var payload = {
+    indoor_aqi: Number(document.getElementById("editIndoorAqi").value) || 0,
+    indoor_ugm3: Number(document.getElementById("editIndoorUgm3").value) || 0,
     indoor_note: document.getElementById("editIndoorNote").value.trim(),
-    outdoor_aqi: Number(document.getElementById("editOutdoorAqi").value)||0,
-    outdoor_ugm3: Number(document.getElementById("editOutdoorUgm3").value)||0,
+    outdoor_aqi: Number(document.getElementById("editOutdoorAqi").value) || 0,
+    outdoor_ugm3: Number(document.getElementById("editOutdoorUgm3").value) || 0,
     outdoor_note: document.getElementById("editOutdoorNote").value.trim(),
-    updater: document.getElementById("editUpdater").value.trim()||"ไม่ระบุ"
+    updater: document.getElementById("editUpdater").value.trim() || "ไม่ระบุ"
   };
-  state.indoor = {aqi:p.indoor_aqi, ugm3:p.indoor_ugm3, note:p.indoor_note};
-  state.outdoor = {aqi:p.outdoor_aqi, ugm3:p.outdoor_ugm3, note:p.outdoor_note};
-  state.timestamp = new Date().toISOString(); state.updater = p.updater;
+
+  // อัปเดต UI ทันที
+  state.indoor = { aqi: payload.indoor_aqi, ugm3: payload.indoor_ugm3, note: payload.indoor_note };
+  state.outdoor = { aqi: payload.outdoor_aqi, ugm3: payload.outdoor_ugm3, note: payload.outdoor_note };
+  state.timestamp = new Date().toISOString();
+  state.updater = payload.updater;
   render();
-  const ok = await saveToSheets(p);
-  if (ok || APPS_SCRIPT_URL.includes("ใส่_URL")) { toast("✅ บันทึกข้อมูลสำเร็จ!","ok"); closeEdit(); }
+
+  var ok = await saveToSheets(payload);
+
+  if (ok) {
+    toast("✅ บันทึกข้อมูลสำเร็จ!", "ok");
+    closeEdit();
+  } else if (!isUrlSet()) {
+    // Demo mode — แสดงผลบนหน้าจอได้แต่ไม่ได้บันทึกจริง
+    toast("📝 แสดงผลแล้ว (Demo — ยังไม่ได้เชื่อม Google Sheets)", "ok");
+    closeEdit();
+  }
+
   btn.disabled = false; btn.textContent = "💾 บันทึก";
 }
 
+// ══════════════════════════════════════
+//  TOAST & INIT
+// ══════════════════════════════════════
 function toast(msg, type) {
-  const t = document.getElementById("toast");
+  var t = document.getElementById("toast");
   t.textContent = msg; t.className = "toast " + type + " show";
-  setTimeout(() => t.classList.remove("show"), 3000);
+  setTimeout(function() { t.classList.remove("show"); }, 3000);
 }
 
-(async () => {
+(async function() {
   await loadFromSheets();
   document.getElementById("loader").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
   render();
-  setInterval(async () => { try { await loadFromSheets(); render(); } catch(e) {} }, 30000);
+
+  // Auto-refresh ทุก 30 วินาที
+  setInterval(async function() {
+    try { await loadFromSheets(); render(); } catch(e) {}
+  }, 30000);
 })();
 </script>
 </body>
