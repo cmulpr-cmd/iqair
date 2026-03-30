@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คุณภาพอากาศ PM 2.5 | Air Quality Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  font-family: 'Sarabun', 'Kanit', sans-serif;
+  background: #0b1120;
+  color: #e2e8f0;
+  overflow-x: hidden;
+}
+
+/* ===== COSMIC BG ===== */
+.cosmos {
+  position: fixed; inset: 0; z-index: 0; overflow: hidden;
+  background: radial-gradient(ellipse at 20% 50%, #0d1b3e 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, #1a0b2e 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 100%, #0b1a2e 0%, transparent 60%),
+              #0b1120;
+}
+.cosmos .nebula {
+  position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.12;
+  animation: drift 20s ease-in-out infinite alternate;
+}
+.cosmos .nebula:nth-child(1) { width: 600px; height: 600px; top: -200px; left: -150px; background: #4ECDC4; }
+.cosmos .nebula:nth-child(2) { width: 500px; height: 500px; bottom: -150px; right: -100px; background: #7C3AED; animation-delay: -7s; }
+.cosmos .nebula:nth-child(3) { width: 300px; height: 300px; top: 30%; left: 55%; background: #3b82f6; animation-delay: -12s; }
+@keyframes drift {
+  0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+  100% { transform: translate(30px, -20px) scale(1.1) rotate(5deg); }
+}
+.stars {
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1.5px 1.5px at 50% 10%, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 70% 80%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 90% 40%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1.5px 1.5px at 15% 85%, rgba(255,255,255,0.35), transparent),
+    radial-gradient(1px 1px at 80% 15%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1.5px 1.5px at 60% 70%, rgba(255,255,255,0.4), transparent);
+  animation: twinkle 8s ease-in-out infinite alternate;
+}
+@keyframes twinkle { 0%{opacity:0.6} 100%{opacity:1} }
+
+.container { max-width: 980px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+
+/* ===== HEADER ===== */
+.header { padding: 44px 0 10px; text-align: center; }
+.header-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 18px; border-radius: 99px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+  font-size: 11px; color: #94a3b8; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 14px;
+}
+.header-badge .pulse { width: 7px; height: 7px; border-radius: 50%; background: #4ECDC4; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(78,205,196,0.5)} 50%{box-shadow:0 0 0 8px rgba(78,205,196,0)} }
+
+.header h1 {
+  font-family: 'Kanit', sans-serif; font-weight: 900;
+  font-size: clamp(26px, 5.5vw, 42px); line-height: 1.15;
+  background: linear-gradient(135deg, #4ECDC4 0%, #a78bfa 40%, #f472b6 70%, #FF6B35 100%);
+  background-size: 300% 300%; animation: gradShift 8s ease infinite;
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+@keyframes gradShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+.header-sub { color: #64748b; font-size: 14px; margin-top: 6px; font-weight: 600; letter-spacing: 0.5px; }
+
+/* ===== INFO BAR ===== */
+.info-bar {
+  display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 16px;
+  margin: 18px 0 28px; padding: 12px 20px;
+  background: rgba(255,255,255,0.04); border-radius: 16px; border: 1px solid rgba(255,255,255,0.07);
+}
+.info-chip { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #94a3b8; font-weight: 500; }
+.info-chip .val { color: #e2e8f0; font-weight: 700; }
+.info-chip .updater-name { color: #a78bfa; font-weight: 700; }
+.info-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.1); }
+
+/* ===== AQI CARDS ===== */
+.aqi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+@media (max-width: 640px) { .aqi-grid { grid-template-columns: 1fr; } }
+
+.aqi-card {
+  position: relative; border-radius: 28px; overflow: hidden;
+  padding: 36px 28px 30px; text-align: center;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+  backdrop-filter: blur(30px);
+  transition: transform 0.4s cubic-bezier(.22,1,.36,1), box-shadow 0.4s;
+}
+.aqi-card:hover { transform: translateY(-6px); box-shadow: 0 30px 70px rgba(0,0,0,0.3); }
+.aqi-card::before {
+  content: ''; position: absolute; inset: -1px; border-radius: 28px; z-index: -1;
+  transition: background 0.6s;
+}
+
+.aqi-card .card-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 16px; border-radius: 99px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+  font-size: 12px; font-weight: 700; letter-spacing: 1.2px;
+  text-transform: uppercase; color: #cbd5e1; margin-bottom: 20px;
+}
+
+/* AQI Ring */
+.aqi-ring-wrap { position: relative; width: 200px; height: 200px; margin: 0 auto 16px; }
+.aqi-ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 8; }
+.ring-progress { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s cubic-bezier(.22,1,.36,1), stroke 0.5s; }
+.aqi-glow-ring {
+  position: absolute; inset: -10px; border-radius: 50%;
+  filter: blur(30px); opacity: 0.15; transition: background 0.5s; pointer-events: none;
+}
+.aqi-center {
+  position: absolute; inset: 20px; border-radius: 50%;
+  background: rgba(11,17,32,0.7);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.aqi-num {
+  font-family: 'Kanit', sans-serif; font-weight: 900;
+  font-size: 64px; line-height: 1; transition: color 0.5s;
+}
+.aqi-label-sm { font-size: 11px; color: #64748b; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+
+/* Status pill */
+.status-pill {
+  display: inline-block; padding: 5px 18px; border-radius: 99px;
+  font-size: 14px; font-weight: 800; font-family: 'Kanit', sans-serif;
+  letter-spacing: 0.5px; transition: all 0.5s; margin-bottom: 14px;
+}
+
+/* µg/m³ */
+.ugm3-box {
+  display: inline-flex; align-items: baseline; gap: 4px;
+  padding: 8px 22px; border-radius: 14px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.06);
+}
+.ugm3-number { font-family: 'Kanit', sans-serif; font-weight: 800; font-size: 26px; transition: color 0.5s; }
+.ugm3-unit { font-size: 13px; color: #64748b; font-weight: 600; }
+
+.card-note { margin-top: 12px; font-size: 12.5px; color: #64748b; font-weight: 500; font-style: italic; min-height: 18px; }
+
+/* ===== LEVEL STYLES ===== */
+.lv-good .aqi-num, .lv-good .ugm3-number { color: #00E400; }
+.lv-good .status-pill { background: rgba(0,228,0,0.12); color: #00E400; }
+.lv-good .ring-progress { stroke: #00E400; }
+.lv-good .aqi-glow-ring { background: #00E400; }
+.lv-good::before { background: linear-gradient(135deg, rgba(0,228,0,0.06), transparent 60%); }
+
+.lv-moderate .aqi-num, .lv-moderate .ugm3-number { color: #d4b800; }
+.lv-moderate .status-pill { background: rgba(212,184,0,0.12); color: #d4b800; }
+.lv-moderate .ring-progress { stroke: #d4b800; }
+.lv-moderate .aqi-glow-ring { background: #d4b800; }
+.lv-moderate::before { background: linear-gradient(135deg, rgba(212,184,0,0.05), transparent 60%); }
+
+.lv-usg .aqi-num, .lv-usg .ugm3-number { color: #FF7E00; }
+.lv-usg .status-pill { background: rgba(255,126,0,0.12); color: #FF7E00; }
+.lv-usg .ring-progress { stroke: #FF7E00; }
+.lv-usg .aqi-glow-ring { background: #FF7E00; }
+.lv-usg::before { background: linear-gradient(135deg, rgba(255,126,0,0.06), transparent 60%); }
+
+.lv-unhealthy .aqi-num, .lv-unhealthy .ugm3-number { color: #FF0000; }
+.lv-unhealthy .status-pill { background: rgba(255,0,0,0.12); color: #FF0000; }
+.lv-unhealthy .ring-progress { stroke: #FF0000; }
+.lv-unhealthy .aqi-glow-ring { background: #FF0000; }
+.lv-unhealthy::before { background: linear-gradient(135deg, rgba(255,0,0,0.06), transparent 60%); }
+
+.lv-very .aqi-num, .lv-very .ugm3-number { color: #c084fc; }
+.lv-very .status-pill { background: rgba(143,63,151,0.15); color: #c084fc; }
+.lv-very .ring-progress { stroke: #8F3F97; }
+.lv-very .aqi-glow-ring { background: #8F3F97; }
+.lv-very::before { background: linear-gradient(135deg, rgba(143,63,151,0.08), transparent 60%); }
+
+.lv-hazardous .aqi-num, .lv-hazardous .ugm3-number { color: #f48fb1; }
+.lv-hazardous .status-pill { background: rgba(194,24,91,0.15); color: #f48fb1; }
+.lv-hazardous .ring-progress { stroke: #7E0023; }
+.lv-hazardous .aqi-glow-ring { background: #7E0023; }
+.lv-hazardous::before { background: linear-gradient(135deg, rgba(126,0,35,0.08), transparent 60%); }
+
+/* ===== LEGEND ===== */
+.legend-bar { display: flex; border-radius: 14px; overflow: hidden; height: 8px; margin-bottom: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+.legend-bar div { flex: 1; }
+.legend-labels {
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;
+  font-size: 10px; color: #64748b; font-weight: 600; margin-bottom: 28px; padding: 0 2px;
+}
+
+/* ===== EDIT BTN ===== */
+.edit-section { text-align: center; margin-bottom: 40px; }
+.btn-edit {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 16px 44px; border: none; border-radius: 99px;
+  font-size: 16px; font-weight: 800; font-family: 'Kanit', sans-serif;
+  cursor: pointer; transition: all 0.4s cubic-bezier(.22,1,.36,1);
+  background: linear-gradient(135deg, #4ECDC4, #7C3AED, #f472b6);
+  background-size: 200% 200%; animation: gradShift 6s ease infinite;
+  color: #FFF; box-shadow: 0 8px 40px rgba(78,205,196,0.25); letter-spacing: 0.5px;
+}
+.btn-edit:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 14px 50px rgba(124,58,237,0.35); }
+
+/* ===== OVERLAYS ===== */
+.overlay {
+  display: none; position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(12px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+.overlay.show { display: flex; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
+
+.pin-box {
+  background: #151d2e; border-radius: 28px; padding: 40px; width: 100%; max-width: 380px;
+  text-align: center; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+}
+.pin-box h2 { font-family: 'Kanit', sans-serif; font-size: 22px; font-weight: 800; color: #e2e8f0; margin-bottom: 6px; }
+.pin-box p { font-size: 13px; color: #64748b; margin-bottom: 24px; }
+.pin-input {
+  width: 100%; padding: 16px; text-align: center; font-size: 32px; font-weight: 900;
+  letter-spacing: 14px; border: 2px solid rgba(255,255,255,0.08); border-radius: 16px;
+  background: rgba(255,255,255,0.04); color: #e2e8f0; outline: none;
+  font-family: 'Kanit', sans-serif; transition: all 0.3s;
+}
+.pin-input:focus { border-color: #4ECDC4; box-shadow: 0 0 0 4px rgba(78,205,196,0.15); }
+.pin-input.shake { animation: shake 0.4s; border-color: #ef4444; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
+
+/* EDIT PANEL */
+.edit-panel {
+  background: #151d2e; border-radius: 28px; padding: 36px; width: 100%; max-width: 540px;
+  border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+  max-height: 92vh; overflow-y: auto;
+}
+.edit-panel::-webkit-scrollbar { width: 4px; }
+.edit-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+.edit-panel h2 { font-family: 'Kanit', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 6px; color: #e2e8f0; text-align: center; }
+.edit-hint { text-align: center; font-size: 12.5px; color: #64748b; margin-bottom: 24px; font-weight: 500; }
+
+.edit-group {
+  background: rgba(255,255,255,0.03); border-radius: 20px; padding: 22px;
+  margin-bottom: 14px; border: 1px solid rgba(255,255,255,0.05);
+}
+.edit-group h3 { font-family: 'Kanit', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: #e2e8f0; }
+
+.edit-row { display: grid; grid-template-columns: 1fr 28px 1fr; gap: 0; align-items: end; margin-bottom: 14px; }
+.arrow-col { display: flex; align-items: center; justify-content: center; color: #4ECDC4; font-size: 16px; padding-bottom: 14px; font-weight: 800; }
+
+.edit-field label { display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 5px; letter-spacing: 0.8px; text-transform: uppercase; }
+.edit-field input, .edit-field textarea {
+  width: 100%; padding: 11px 14px; border: 2px solid rgba(255,255,255,0.06);
+  border-radius: 12px; font-size: 16px; font-family: 'Kanit', sans-serif;
+  font-weight: 700; background: rgba(255,255,255,0.04); color: #e2e8f0; outline: none; transition: all 0.3s;
+}
+.edit-field input:focus, .edit-field textarea:focus { border-color: #4ECDC4; box-shadow: 0 0 0 3px rgba(78,205,196,0.12); }
+.edit-field textarea { resize: vertical; min-height: 42px; font-size: 13px; font-weight: 500; }
+.edit-field .helper { font-size: 10.5px; color: #475569; margin-top: 3px; font-weight: 500; }
+
+.edit-preview { text-align: center; margin: 4px 0 12px; padding: 8px 14px; border-radius: 12px; font-size: 13px; font-weight: 700; font-family: 'Kanit', sans-serif; transition: all 0.3s; }
+
+.edit-actions { display: flex; gap: 10px; margin-top: 22px; }
+.btn-save, .btn-cancel {
+  flex: 1; padding: 15px; border: none; border-radius: 16px;
+  font-size: 15px; font-weight: 800; font-family: 'Kanit', sans-serif; cursor: pointer; transition: all 0.3s;
+}
+.btn-save { background: linear-gradient(135deg, #4ECDC4, #7C3AED); color: #FFF; box-shadow: 0 6px 24px rgba(78,205,196,0.3); }
+.btn-save:hover { transform: translateY(-2px); }
+.btn-cancel { background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.08); }
+.btn-cancel:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed; bottom: -70px; left: 50%; transform: translateX(-50%);
+  padding: 14px 32px; border-radius: 16px; font-size: 14px; font-weight: 700;
+  z-index: 2000; transition: bottom 0.4s cubic-bezier(.22,1,.36,1);
+  font-family: 'Kanit', sans-serif; box-shadow: 0 12px 40px rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+}
+.toast.show { bottom: 32px; }
+.toast.ok { background: rgba(6,95,70,0.9); color: #6ee7b7; border: 1px solid rgba(110,231,183,0.2); }
+.toast.err { background: rgba(127,29,29,0.9); color: #fca5a5; border: 1px solid rgba(252,165,165,0.2); }
+
+/* ===== LOADER ===== */
+.loader-screen { position: fixed; inset: 0; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0b1120; }
+.loader-screen.hidden { display: none; }
+.loader-ring { width: 52px; height: 52px; border: 3px solid rgba(255,255,255,0.06); border-top-color: #4ECDC4; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loader-text { margin-top: 18px; font-size: 14px; color: #64748b; font-weight: 600; }
+
+.footer { text-align: center; padding: 20px 0 40px; font-size: 12px; color: #334155; font-weight: 500; }
+.footer a { color: #4ECDC4; text-decoration: none; }
+#app.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="cosmos"><div class="nebula"></div><div class="nebula"></div><div class="nebula"></div></div>
+<div class="stars"></div>
+
+<div class="loader-screen" id="loader">
+  <div class="loader-ring"></div>
+  <div class="loader-text">กำลังโหลดข้อมูลคุณภาพอากาศ...</div>
+</div>
+
+<div id="app" class="hidden">
+<div class="container">
+  <div class="header">
+    <div class="header-badge"><div class="pulse"></div> REAL-TIME MONITOR</div>
+    <h1>คุณภาพอากาศ PM 2.5</h1>
+    <div class="header-sub">Air Quality Index — ภายในอาคาร & ภายนอกอาคาร</div>
+  </div>
+
+  <div class="info-bar">
+    <div class="info-chip">🕐 อัปเดตล่าสุด: <span class="val" id="lastUpdate">—</span></div>
+    <div class="info-divider"></div>
+    <div class="info-chip">👤 โดย: <span class="updater-name" id="updater">—</span></div>
+  </div>
+
+  <div class="aqi-grid">
+    <!-- Indoor -->
+    <div class="aqi-card" id="cardIndoor">
+      <div class="card-tag"><span style="font-size:15px">🏢</span> INDOOR — ภายในอาคาร</div>
+      <div class="aqi-ring-wrap">
+        <svg class="aqi-ring-svg" viewBox="0 0 200 200">
+          <circle class="ring-bg" cx="100" cy="100" r="88"/>
+          <circle class="ring-progress" id="ringIndoor" cx="100" cy="100" r="88" stroke-dasharray="553" stroke-dashoffset="553"/>
+        </svg>
+        <div class="aqi-glow-ring" id="glowIndoor"></div>
+        <div class="aqi-center">
+          <div class="aqi-num" id="indoorAqi">—</div>
+          <div class="aqi-label-sm">AQI</div>
+        </div>
+      </div>
+      <div class="status-pill" id="indoorStatus">—</div>
+      <div class="ugm3-box">
+        <span class="ugm3-number" id="indoorUgm3">—</span>
+        <span class="ugm3-unit">µg/m³</span>
+      </div>
+      <div class="card-note" id="indoorNote"></div>
+    </div>
+
+    <!-- Outdoor -->
+    <div class="aqi-card" id="cardOutdoor">
+      <div class="card-tag"><span style="font-size:15px">🌳</span> OUTDOOR — ภายนอกอาคาร</div>
+      <div class="aqi-ring-wrap">
+        <svg class="aqi-ring-svg" viewBox="0 0 200 200">
+          <circle class="ring-bg" cx="100" cy="100" r="88"/>
+          <circle class="ring-progress" id="ringOutdoor" cx="100" cy="100" r="88" stroke-dasharray="553" stroke-dashoffset="553"/>
+        </svg>
+        <div class="aqi-glow-ring" id="glowOutdoor"></div>
+        <div class="aqi-center">
+          <div class="aqi-num" id="outdoorAqi">—</div>
+          <div class="aqi-label-sm">AQI</div>
+        </div>
+      </div>
+      <div class="status-pill" id="outdoorStatus">—</div>
+      <div class="ugm3-box">
+        <span class="ugm3-number" id="outdoorUgm3">—</span>
+        <span class="ugm3-unit">µg/m³</span>
+      </div>
+      <div class="card-note" id="outdoorNote"></div>
+    </div>
+  </div>
+
+  <div class="legend-bar">
+    <div style="background:#00E400"></div><div style="background:#FFFF00"></div>
+    <div style="background:#FF7E00"></div><div style="background:#FF0000"></div>
+    <div style="background:#8F3F97"></div><div style="background:#7E0023"></div>
+  </div>
+  <div class="legend-labels">
+    <span>0-50 ดี</span><span>51-100 ปานกลาง</span><span>101-150 กลุ่มเสี่ยง</span>
+    <span>151-200 ไม่ดี</span><span>201-300 อันตราย</span><span>301+ อันตรายมาก</span>
+  </div>
+
+  <div class="edit-section">
+    <button class="btn-edit" onclick="openPin()">✏️ แก้ไขข้อมูล</button>
+  </div>
+  <div class="footer">PM 2.5 Air Quality Monitor — ข้อมูลเก็บบน <a href="#">Google Sheets</a></div>
+</div>
+</div>
+
+<!-- PIN -->
+<div class="overlay" id="pinOverlay">
+  <div class="pin-box">
+    <h2>🔐 กรอก PIN</h2>
+    <p>กรอกรหัส 4 หลักเพื่อแก้ไขข้อมูล</p>
+    <input class="pin-input" id="pinInput" type="password" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="••••">
+  </div>
+</div>
+
+<!-- Edit -->
+<div class="overlay" id="editOverlay">
+  <div class="edit-panel">
+    <h2>✏️ แก้ไขค่า PM 2.5</h2>
+    <div class="edit-hint">💡 กรอกค่า AQI หรือ µg/m³ อย่างใดอย่างหนึ่ง — ระบบคำนวณอีกช่องให้อัตโนมัติ</div>
+
+    <div class="edit-group">
+      <h3>🏢 ภายในอาคาร</h3>
+      <div class="edit-row">
+        <div class="edit-field">
+          <label>ค่า AQI</label>
+          <input type="number" id="editIndoorAqi" min="0" max="500" placeholder="0-500" oninput="onAqiInput('indoor')">
+          <div class="helper">กรอก AQI → คำนวณ µg/m³ ให้</div>
+        </div>
+        <div class="arrow-col">⇄</div>
+        <div class="edit-field">
+          <label>µg/m³</label>
+          <input type="number" id="editIndoorUgm3" min="0" max="999" step="0.1" placeholder="0-999" oninput="onUgm3Input('indoor')">
+          <div class="helper">กรอก µg/m³ → คำนวณ AQI ให้</div>
+        </div>
+      </div>
+      <div class="edit-preview" id="previewIndoor">—</div>
+      <div class="edit-field">
+        <label>หมายเหตุ</label>
+        <textarea id="editIndoorNote" rows="2" placeholder="เช่น เปิดเครื่องฟอกอากาศแล้ว..."></textarea>
+      </div>
+    </div>
+
+    <div class="edit-group">
+      <h3>🌳 ภายนอกอาคาร</h3>
+      <div class="edit-row">
+        <div class="edit-field">
+          <label>ค่า AQI</label>
+          <input type="number" id="editOutdoorAqi" min="0" max="500" placeholder="0-500" oninput="onAqiInput('outdoor')">
+          <div class="helper">กรอก AQI → คำนวณ µg/m³ ให้</div>
+        </div>
+        <div class="arrow-col">⇄</div>
+        <div class="edit-field">
+          <label>µg/m³</label>
+          <input type="number" id="editOutdoorUgm3" min="0" max="999" step="0.1" placeholder="0-999" oninput="onUgm3Input('outdoor')">
+          <div class="helper">กรอก µg/m³ → คำนวณ AQI ให้</div>
+        </div>
+      </div>
+      <div class="edit-preview" id="previewOutdoor">—</div>
+      <div class="edit-field">
+        <label>หมายเหตุ</label>
+        <textarea id="editOutdoorNote" rows="2" placeholder="เช่น มีหมอกควัน..."></textarea>
+      </div>
+    </div>
+
+    <div class="edit-field" style="margin-bottom: 16px;">
+      <label>ผู้อัปเดต</label>
+      <input type="text" id="editUpdater" placeholder="ชื่อผู้อัปเดต">
+    </div>
+
+    <div class="edit-actions">
+      <button class="btn-cancel" onclick="closeEdit()">ยกเลิก</button>
+      <button class="btn-save" id="btnSave" onclick="saveData()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ★★★ วาง URL ของ Google Apps Script ที่นี่ ★★★
+const APPS_SCRIPT_URL = "ใส่_URL_ตรงนี้";
+const EDIT_PIN = "2567";
+
+// ══════════════════════════════════════════
+//  PM2.5 AQI ↔ µg/m³ CONVERSION (US EPA)
+// ══════════════════════════════════════════
+const BP = [
+  { aqiLo:0,   aqiHi:50,  cLo:0.0,   cHi:12.0   },
+  { aqiLo:51,  aqiHi:100, cLo:12.1,  cHi:35.4   },
+  { aqiLo:101, aqiHi:150, cLo:35.5,  cHi:55.4   },
+  { aqiLo:151, aqiHi:200, cLo:55.5,  cHi:150.4  },
+  { aqiLo:201, aqiHi:300, cLo:150.5, cHi:250.4  },
+  { aqiLo:301, aqiHi:400, cLo:250.5, cHi:350.4  },
+  { aqiLo:401, aqiHi:500, cLo:350.5, cHi:500.4  },
+];
+
+function aqiToUgm3(aqi) {
+  const v = Number(aqi);
+  if (isNaN(v) || v < 0) return 0;
+  for (const b of BP) {
+    if (v >= b.aqiLo && v <= b.aqiHi) {
+      return Math.round(((v - b.aqiLo) / (b.aqiHi - b.aqiLo) * (b.cHi - b.cLo) + b.cLo) * 10) / 10;
+    }
+  }
+  return Math.round(v * 10) / 10;
+}
+
+function ugm3ToAqi(conc) {
+  const v = Number(conc);
+  if (isNaN(v) || v < 0) return 0;
+  for (const b of BP) {
+    if (v >= b.cLo && v <= b.cHi) {
+      return Math.round((b.aqiHi - b.aqiLo) / (b.cHi - b.cLo) * (v - b.cLo) + b.aqiLo);
+    }
+  }
+  return Math.min(Math.round(v), 500);
+}
+
+let editLock = false;
+function onAqiInput(type) {
+  if (editLock) return; editLock = true;
+  const v = document.getElementById(`edit${cap(type)}Aqi`).value;
+  if (v !== '') document.getElementById(`edit${cap(type)}Ugm3`).value = aqiToUgm3(v);
+  updatePreview(type); editLock = false;
+}
+function onUgm3Input(type) {
+  if (editLock) return; editLock = true;
+  const v = document.getElementById(`edit${cap(type)}Ugm3`).value;
+  if (v !== '') document.getElementById(`edit${cap(type)}Aqi`).value = ugm3ToAqi(v);
+  updatePreview(type); editLock = false;
+}
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ══════════════════════════════════════
+//  AQI LEVELS
+// ══════════════════════════════════════
+const LEVELS = [
+  { min:0,   max:50,  label:"คุณภาพดี",           cls:"lv-good"      },
+  { min:51,  max:100, label:"ปานกลาง",            cls:"lv-moderate"  },
+  { min:101, max:150, label:"ไม่ดีต่อกลุ่มเสี่ยง", cls:"lv-usg"       },
+  { min:151, max:200, label:"ไม่ดีต่อสุขภาพ",      cls:"lv-unhealthy" },
+  { min:201, max:300, label:"อันตราย",             cls:"lv-very"      },
+  { min:301, max:999, label:"อันตรายมาก",          cls:"lv-hazardous" },
+];
+const LEVEL_COLORS = ["#00E400","#d4b800","#FF7E00","#FF0000","#8F3F97","#7E0023"];
+
+function getLevel(aqi) {
+  const v = Number(aqi) || 0;
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (v >= LEVELS[i].min && v <= LEVELS[i].max) return { ...LEVELS[i], color: LEVEL_COLORS[i], idx: i };
+  }
+  return { ...LEVELS[5], color: LEVEL_COLORS[5], idx: 5 };
+}
+
+// ══════════════════════════════════════
+//  STATE & RENDER
+// ══════════════════════════════════════
+let state = { indoor:{aqi:0,ugm3:0,note:""}, outdoor:{aqi:0,ugm3:0,note:""}, timestamp:"", updater:"" };
+const CIRC = 2 * Math.PI * 88; // ~553
+
+function render() {
+  renderCard("indoor", state.indoor);
+  renderCard("outdoor", state.outdoor);
+  document.getElementById("lastUpdate").textContent = state.timestamp ? formatDate(state.timestamp) : "—";
+  document.getElementById("updater").textContent = state.updater || "—";
+}
+
+function renderCard(type, data) {
+  const lv = getLevel(data.aqi);
+  const card = document.getElementById(type === "indoor" ? "cardIndoor" : "cardOutdoor");
+  LEVELS.forEach(l => card.classList.remove(l.cls));
+  card.classList.add(lv.cls);
+
+  const pre = type === "indoor" ? "indoor" : "outdoor";
+  document.getElementById(pre + "Aqi").textContent = data.aqi;
+  document.getElementById(pre + "Ugm3").textContent = data.ugm3;
+  document.getElementById(pre + "Status").textContent = lv.label;
+  document.getElementById(pre + "Note").textContent = data.note || "";
+
+  // Ring progress (0-500 → 0-100%)
+  const pct = Math.min(Number(data.aqi) / 500, 1);
+  const offset = CIRC * (1 - pct);
+  document.getElementById("ring" + cap(type)).style.strokeDashoffset = offset;
+}
+
+function formatDate(str) {
+  try {
+    const d = new Date(str);
+    return d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'})
+      + " " + d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) + " น.";
+  } catch { return str; }
+}
+
+function updatePreview(type) {
+  const aqi = Number(document.getElementById(`edit${cap(type)}Aqi`).value) || 0;
+  const lv = getLevel(aqi);
+  const el = document.getElementById(`preview${cap(type)}`);
+  el.textContent = `AQI ${aqi} → ${lv.label}`;
+  el.style.background = lv.color + "18";
+  el.style.color = lv.color;
+}
+
+// ══════════════════════════════════════
+//  GOOGLE SHEETS
+// ══════════════════════════════════════
+async function loadFromSheets() {
+  if (APPS_SCRIPT_URL.includes("ใส่_URL")) {
+    state = { indoor:{aqi:25,ugm3:8.5,note:"เปิดเครื่องฟอกอากาศ"}, outdoor:{aqi:142,ugm3:53.4,note:"มีหมอกควันเล็กน้อย"}, timestamp:new Date().toISOString(), updater:"ตัวอย่าง (Demo)" };
+    return;
+  }
+  try {
+    const res = await fetch(APPS_SCRIPT_URL);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    state = { indoor:data.indoor||{aqi:0,ugm3:0,note:""}, outdoor:data.outdoor||{aqi:0,ugm3:0,note:""}, timestamp:data.timestamp||"", updater:data.updater||"" };
+  } catch(e) { console.error(e); toast("⚠️ โหลดข้อมูลไม่ได้","err"); }
+}
+
+async function saveToSheets(p) {
+  if (APPS_SCRIPT_URL.includes("ใส่_URL")) { toast("⚠️ ยังไม่ได้ตั้ง URL","err"); return false; }
+  try {
+    const res = await fetch(APPS_SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(p)});
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    return true;
+  } catch(e) { console.error(e); toast("❌ บันทึกไม่สำเร็จ: "+e.message,"err"); return false; }
+}
+
+// ══════════════════════════════════════
+//  PIN / EDIT
+// ══════════════════════════════════════
+function openPin() {
+  document.getElementById("pinOverlay").classList.add("show");
+  const inp = document.getElementById("pinInput"); inp.value = "";
+  setTimeout(() => inp.focus(), 200);
+}
+function closePin() { document.getElementById("pinOverlay").classList.remove("show"); }
+document.getElementById("pinInput").addEventListener("input", function() {
+  if (this.value.length === 4) {
+    if (this.value === EDIT_PIN) { closePin(); openEdit(); }
+    else { this.classList.add("shake"); setTimeout(() => { this.classList.remove("shake"); this.value = ""; }, 500); }
+  }
+});
+document.getElementById("pinOverlay").addEventListener("click", function(e) { if (e.target === this) closePin(); });
+
+function openEdit() {
+  document.getElementById("editIndoorAqi").value = state.indoor.aqi;
+  document.getElementById("editIndoorUgm3").value = state.indoor.ugm3;
+  document.getElementById("editIndoorNote").value = state.indoor.note || "";
+  document.getElementById("editOutdoorAqi").value = state.outdoor.aqi;
+  document.getElementById("editOutdoorUgm3").value = state.outdoor.ugm3;
+  document.getElementById("editOutdoorNote").value = state.outdoor.note || "";
+  document.getElementById("editUpdater").value = state.updater || "";
+  updatePreview("indoor"); updatePreview("outdoor");
+  document.getElementById("editOverlay").classList.add("show");
+}
+function closeEdit() { document.getElementById("editOverlay").classList.remove("show"); }
+document.getElementById("editOverlay").addEventListener("click", function(e) { if (e.target === this) closeEdit(); });
+
+async function saveData() {
+  const btn = document.getElementById("btnSave");
+  btn.disabled = true; btn.textContent = "⏳ กำลังบันทึก...";
+  const p = {
+    indoor_aqi: Number(document.getElementById("editIndoorAqi").value)||0,
+    indoor_ugm3: Number(document.getElementById("editIndoorUgm3").value)||0,
+    indoor_note: document.getElementById("editIndoorNote").value.trim(),
+    outdoor_aqi: Number(document.getElementById("editOutdoorAqi").value)||0,
+    outdoor_ugm3: Number(document.getElementById("editOutdoorUgm3").value)||0,
+    outdoor_note: document.getElementById("editOutdoorNote").value.trim(),
+    updater: document.getElementById("editUpdater").value.trim()||"ไม่ระบุ"
+  };
+  state.indoor = {aqi:p.indoor_aqi, ugm3:p.indoor_ugm3, note:p.indoor_note};
+  state.outdoor = {aqi:p.outdoor_aqi, ugm3:p.outdoor_ugm3, note:p.outdoor_note};
+  state.timestamp = new Date().toISOString(); state.updater = p.updater;
+  render();
+  const ok = await saveToSheets(p);
+  if (ok || APPS_SCRIPT_URL.includes("ใส่_URL")) { toast("✅ บันทึกข้อมูลสำเร็จ!","ok"); closeEdit(); }
+  btn.disabled = false; btn.textContent = "💾 บันทึก";
+}
+
+function toast(msg, type) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.className = "toast " + type + " show";
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+(async () => {
+  await loadFromSheets();
+  document.getElementById("loader").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  render();
+  setInterval(async () => { try { await loadFromSheets(); render(); } catch(e) {} }, 30000);
+})();
+</script>
+</body>
+</html>
