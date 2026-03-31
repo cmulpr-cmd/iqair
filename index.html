@@ -671,12 +671,12 @@ async function saveToSheets(payload) {
     params.set("updater", encodeURIComponent(payload.updater));
     params.set("t", Date.now());
 
-    var url = APPS_SCRIPT_URL + "?" + params.toString();
-    var res = await fetch(url);
-    var data = await res.json();
-
-    if (data.error) throw new Error(data.error);
-    return true;
+return new Promise(function(resolve) {
+  var img = new Image();
+  img.onload = img.onerror = function() { resolve(true); };
+  img.src = url;
+  setTimeout(function() { resolve(true); }, 4000);
+});
 
   } catch(e) {
     console.error("Save error:", e);
