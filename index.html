@@ -12,7 +12,7 @@ body {
   min-height: 100vh;
   font-family: 'Sarabun', 'Kanit', sans-serif;
   background: #0b1120;
-  color: #ffffff;
+  color: #e2e8f0;
   overflow-x: hidden;
 }
 
@@ -213,11 +213,35 @@ body {
 @keyframes fadeIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
 
 .pin-box {
-  background: #151d2e; border-radius: 28px; padding: 40px; width: 100%; max-width: 380px;
+  background: #151d2e; border-radius: 28px; padding: 40px; width: 100%; max-width: 420px;
   text-align: center; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 30px 80px rgba(0,0,0,0.5);
 }
 .pin-box h2 { font-family: 'Kanit', sans-serif; font-size: 22px; font-weight: 800; color: #e2e8f0; margin-bottom: 6px; }
-.pin-box p { font-size: 13px; color: #64748b; margin-bottom: 24px; }
+.pin-box p { font-size: 13px; color: #64748b; margin-bottom: 24px; line-height: 1.7; }
+.pin-attempts { font-size: 12px; color: #f87171; margin-top: 12px; font-weight: 600; min-height: 18px; }
+.manager-section { display: none; margin-top: 20px; }
+.manager-section.show { display: block; animation: fadeIn 0.3s; }
+.manager-section h3 { font-family: 'Kanit', sans-serif; font-size: 16px; font-weight: 800; color: #f87171; margin-bottom: 8px; }
+.manager-section p { font-size: 12.5px; color: #94a3b8; margin-bottom: 16px; line-height: 1.7; }
+.manager-input-wrap { display: flex; gap: 8px; }
+.manager-input {
+  flex: 1; padding: 12px 16px; border: 2px solid rgba(255,255,255,0.08); border-radius: 14px;
+  background: rgba(255,255,255,0.04); color: #e2e8f0; outline: none; font-size: 15px;
+  font-family: 'Kanit', sans-serif; font-weight: 600; transition: all 0.3s;
+}
+.manager-input:focus { border-color: #a78bfa; box-shadow: 0 0 0 4px rgba(167,139,250,0.15); }
+.manager-input.shake { animation: shake 0.4s; border-color: #ef4444; }
+.btn-confirm {
+  padding: 12px 24px; border: none; border-radius: 14px;
+  background: linear-gradient(135deg, #7C3AED, #a78bfa); color: #FFF;
+  font-size: 14px; font-weight: 800; font-family: 'Kanit', sans-serif;
+  cursor: pointer; transition: all 0.3s; white-space: nowrap;
+}
+.btn-confirm:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
+.pin-divider { width: 100%; height: 1px; background: rgba(255,255,255,0.08); margin: 20px 0; }
+.pin-section-normal { }
+.pin-section-normal.locked .pin-input { opacity: 0.3; pointer-events: none; }
+.pin-section-normal.locked p { color: #f87171; }
 .pin-input {
   width: 100%; padding: 16px; text-align: center; font-size: 32px; font-weight: 900;
   letter-spacing: 14px; border: 2px solid rgba(255,255,255,0.08); border-radius: 16px;
@@ -288,7 +312,7 @@ body {
 @keyframes spin { to { transform: rotate(360deg); } }
 .loader-text { margin-top: 18px; font-size: 14px; color: #64748b; font-weight: 600; }
 
-.footer { text-align: center; padding: 20px 0 40px; font-size: 12px; color: #ffffff; font-weight: 500; }
+.footer { text-align: center; padding: 20px 0 40px; font-size: 12px; color: #334155; font-weight: 500; }
 .footer a { color: #4ECDC4; text-decoration: none; }
 #app.hidden { display: none; }
 </style>
@@ -299,7 +323,7 @@ body {
 
 <div class="loader-screen" id="loader">
   <div class="loader-ring"></div>
-  <div class="loader-text">กำลังโหลดข้อมูลคุณภาพอากาศ ภายในและภายนอกอาคารสำนักหอสมุด มช.</div>
+  <div class="loader-text">กำลังโหลดข้อมูลคุณภาพอากาศ...</div>
 </div>
 
 <div id="app" class="hidden">
@@ -318,7 +342,7 @@ body {
 
   <div class="aqi-grid">
     <div class="aqi-card" id="cardIndoor">
-      <div class="card-tag"><span style="font-size:15px">🏢</span> INDOOR — ภายในอาคารสำนักหอสมุด</div>
+      <div class="card-tag"><span style="font-size:15px">🏢</span> INDOOR — ภายในอาคาร</div>
       <div class="aqi-ring-wrap">
         <svg class="aqi-ring-svg" viewBox="0 0 200 200">
           <circle class="ring-bg" cx="100" cy="100" r="88"/>
@@ -339,7 +363,7 @@ body {
     </div>
 
     <div class="aqi-card" id="cardOutdoor">
-      <div class="card-tag"><span style="font-size:15px">🌳</span> OUTDOOR — ภายนอกอาคารสำนักหอสมุด</div>
+      <div class="card-tag"><span style="font-size:15px">🌳</span> OUTDOOR — ภายนอกอาคาร</div>
       <div class="aqi-ring-wrap">
         <svg class="aqi-ring-svg" viewBox="0 0 200 200">
           <circle class="ring-bg" cx="100" cy="100" r="88"/>
@@ -373,16 +397,31 @@ body {
   <div class="edit-section">
     <button class="btn-edit" onclick="openPin()">✏️ แก้ไขข้อมูล</button>
   </div>
-  <div class="footer">PM 2.5 Air Quality Monitor | ข้อมูลเก็บโดยบรรณารักษ์สาวแสนสวย | Created by Public Relation Unit | CMUL</div>
+  <div class="footer">PM 2.5 Air Quality Monitor — ข้อมูลเก็บบน <a href="#">Google Sheets</a></div>
 </div>
 </div>
 
 <!-- PIN -->
 <div class="overlay" id="pinOverlay">
   <div class="pin-box">
-    <h2>🔐 กรอก PIN</h2>
-    <p>กรอกรหัส 4 หลักเพื่อแก้ไขข้อมูล</p>
-    <input class="pin-input" id="pinInput" type="password" maxlength="5" inputmode="numeric" pattern="[0-9]*" placeholder="•••••">
+    <!-- ส่วนกรอก PIN ปกติ -->
+    <div class="pin-section-normal" id="pinNormal">
+      <h2>🔐 กรอก PIN</h2>
+      <p>กรอกรหัสเพื่อแก้ไขข้อมูล</p>
+      <input class="pin-input" id="pinInput" type="password" maxlength="5" inputmode="numeric" pattern="[0-9]*" placeholder="•••••">
+      <div class="pin-attempts" id="pinAttempts"></div>
+    </div>
+
+    <!-- ส่วนปลดล็อคโดย Manager (ซ่อนไว้ก่อน) -->
+    <div class="manager-section" id="managerSection">
+      <div class="pin-divider"></div>
+      <h3>🚫 ใส่รหัสผิดเกินจำนวนครั้ง</h3>
+      <p>โปรดให้ผู้จัดการเว็บไซต์กรอกรหัสเพื่อปลดล็อค</p>
+      <div class="manager-input-wrap">
+        <input class="manager-input" id="managerInput" type="password" placeholder="รหัสผู้จัดการ">
+        <button class="btn-confirm" onclick="confirmManager()">ยืนยัน</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -452,8 +491,12 @@ body {
 
 <script>
 // ★★★ วาง URL ของ Google Apps Script ที่นี่ ★★★
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzoHjm5A36hudEtBV7ewFACzd3ssGgLt-zAJfR0IDs-LCK5ceJKUP7q8xqP9BshMikh/exec";
+const APPS_SCRIPT_URL = "ttps://script.google.com/macros/s/AKfycbzoHjm5A36hudEtBV7ewFACzd3ssGgLt-zAJfR0IDs-LCK5ceJKUP7q8xqP9BshMikh/exec";
 const EDIT_PIN = "44567";
+const MANAGER_PIN = "@Cmulpr44567";
+const MAX_ATTEMPTS = 3;
+var pinAttempts = 0;
+var pinLocked = false;
 
 // ══════════════════════════════════════════
 //  PM2.5 AQI ↔ µg/m³ (US EPA Breakpoints)
@@ -647,21 +690,81 @@ async function saveToSheets(payload) {
 // ══════════════════════════════════════
 function openPin() {
   document.getElementById("pinOverlay").classList.add("show");
-  var inp = document.getElementById("pinInput"); inp.value = "";
-  setTimeout(function() { inp.focus(); }, 200);
+  var inp = document.getElementById("pinInput");
+  inp.value = "";
+  if (!pinLocked) {
+    setTimeout(function() { inp.focus(); }, 200);
+  }
 }
-function closePin() { document.getElementById("pinOverlay").classList.remove("show"); }
+function closePin() {
+  document.getElementById("pinOverlay").classList.remove("show");
+  document.getElementById("managerInput").value = "";
+}
+
+function lockPin() {
+  pinLocked = true;
+  var normal = document.getElementById("pinNormal");
+  normal.classList.add("locked");
+  document.getElementById("pinInput").disabled = true;
+  document.getElementById("pinAttempts").textContent = "❌ ถูกล็อค — กรุณาติดต่อผู้จัดการ";
+  document.getElementById("managerSection").classList.add("show");
+  document.getElementById("managerInput").value = "";
+  setTimeout(function() { document.getElementById("managerInput").focus(); }, 200);
+}
+
+function unlockPin() {
+  pinLocked = false;
+  pinAttempts = 0;
+  var normal = document.getElementById("pinNormal");
+  normal.classList.remove("locked");
+  document.getElementById("pinInput").disabled = false;
+  document.getElementById("pinInput").value = "";
+  document.getElementById("pinAttempts").textContent = "";
+  document.getElementById("managerSection").classList.remove("show");
+  document.getElementById("managerInput").value = "";
+  toast("🔓 ปลดล็อคสำเร็จ — กรอก PIN ได้อีกครั้ง", "ok");
+  setTimeout(function() { document.getElementById("pinInput").focus(); }, 200);
+}
+
+function confirmManager() {
+  var inp = document.getElementById("managerInput");
+  if (inp.value === MANAGER_PIN) {
+    unlockPin();
+  } else {
+    inp.classList.add("shake");
+    setTimeout(function() { inp.classList.remove("shake"); }, 500);
+    toast("❌ รหัสผู้จัดการไม่ถูกต้อง", "err");
+  }
+}
 
 document.getElementById("pinInput").addEventListener("input", function() {
+  if (pinLocked) return;
   if (this.value.length === 5) {
-    if (this.value === EDIT_PIN) { closePin(); openEdit(); }
-    else {
+    if (this.value === EDIT_PIN) {
+      pinAttempts = 0;
+      document.getElementById("pinAttempts").textContent = "";
+      closePin();
+      openEdit();
+    } else {
+      pinAttempts++;
       this.classList.add("shake");
       var self = this;
-      setTimeout(function() { self.classList.remove("shake"); self.value = ""; }, 500);
+      var remaining = MAX_ATTEMPTS - pinAttempts;
+
+      if (pinAttempts >= MAX_ATTEMPTS) {
+        setTimeout(function() { self.classList.remove("shake"); self.value = ""; lockPin(); }, 500);
+      } else {
+        document.getElementById("pinAttempts").textContent = "⚠️ รหัสผิด — เหลืออีก " + remaining + " ครั้ง";
+        setTimeout(function() { self.classList.remove("shake"); self.value = ""; }, 500);
+      }
     }
   }
 });
+
+document.getElementById("managerInput").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") confirmManager();
+});
+
 document.getElementById("pinOverlay").addEventListener("click", function(e) { if (e.target === this) closePin(); });
 
 function openEdit() {
